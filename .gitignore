@@ -60,6 +60,17 @@ _ReSharper*
 #########################
 *.bak
 
+# WinAVR project files #
+########################
+*.o.d
+*.cpp.bat
+*.cpp.err
+link.bat
+link.err
+*.lss
+*.map
+*.sym
+
 # OS generated files #
 ######################
 .DS_Store
