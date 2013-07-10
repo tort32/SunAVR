@@ -32,8 +32,14 @@
 
 class IR
 {
+  friend class IR_Accessor;
 public:
-  static void init();
+  typedef void (*CommandCallback)(uint8_t, uint8_t);
+
+  static void init(CommandCallback pf, bool callOnRepeat = false);
+private:
+  static CommandCallback mpCommandCallback;
+  static bool mCallOnRepeat;
 };
 
 

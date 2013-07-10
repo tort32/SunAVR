@@ -1,7 +1,11 @@
 #include "stdafx.h"
 #include "IR.h"
 
+//#define TEST_ON_LCD 1
+
+#ifdef TEST_ON_LCD
 #include "LCD.h"
+#endif
 
 enum {
   STATE_IDLE = 0x0,
@@ -23,9 +27,14 @@ enum {
 
 static volatile uint8_t state;
 static volatile uint8_t data[2]; // Address, Command
+IR::CommandCallback IR::mpCommandCallback;
+bool IR::mCallOnRepeat;
 
-void IR::init()
+void IR::init(CommandCallback pFunc, bool callOnRepeat)
 {
+  mpCommandCallback = pFunc;
+  mCallOnRepeat = callOnRepeat;
+
   // Configure 8-bit Counter0 for the time measurement
   TIMSK |= _BV(TOIE0); // enable Counter0 Overflow
 
@@ -64,6 +73,17 @@ static void stopCounter()
 #define TCNT_REPEAT 40
 #define TCNT_START 60
 
+// Class accessor for private fields cause data are processing in the interruption handler
+class IR_Accessor
+{
+public:
+  inline static void Callback(uint8_t ard, uint8_t cmd)
+  {
+    IR::mpCommandCallback(ard, cmd);
+  }
+  inline static bool IsCallOnRepeat() { return IR::mCallOnRepeat; }
+};
+
 ISR(INT1_vect)
 {
   cli();
@@ -89,20 +109,23 @@ ISR(INT1_vect)
       state = STATE_IDLE;
 
       // TODO: call handler again
-      /*
+#ifdef TEST_ON_LCD
       LCD::print('R');
-      LCD::printDigit3(cnt);
-      */
+#else
+      if(IR_Accessor::IsCallOnRepeat())
+      {
+        IR_Accessor::Callback(data[0],data[1]);
+      }
+#endif
     }
     else
     {
       // Signal too short
-      stopCounter();
       state = STATE_ERROR;
-      /*
+#ifdef TEST_ON_LCD
       LCD::print('!');
       LCD::printDigit3(cnt);
-      */
+#endif
     }
   }
   else if(state & STATE_CMD_MASK)
@@ -122,8 +145,14 @@ ISR(INT1_vect)
       }
       else
       {
-        // TODO: check inverted bit
-        // getbits(data[dataIdx]), 1 << (bit - 8)) != 0
+        // Check inverted bit
+        if(getbits(data[dataIdx], 1 << (bit - STATE_BIT_INV)) == 0)
+        {
+          state = STATE_ERROR;
+#ifdef TEST_ON_LCD
+          LCD::print('^');
+#endif
+        }
       }
       ++state; // move to the next bit
     }
@@ -138,19 +167,24 @@ ISR(INT1_vect)
       else
       {
         // TODO: check inverted bit
-        // getbits(data[dataIdx]), 1 << (bit - 8)) == 0
+        if(getbits(data[dataIdx], 1 << (bit - STATE_BIT_INV)) != 0)
+        {
+          state = STATE_ERROR;
+#ifdef TEST_ON_LCD
+          LCD::print('^');
+#endif
+        }
       }
       ++state; // move to the next bit
     }
     else
     {
       // Signal too long
-      stopCounter();
       state = STATE_ERROR;
-      /*
+#ifdef TEST_ON_LCD
       LCD::print('?');
       LCD::printDigit3(cnt);
-      */
+#endif
     }
 
     if(state == STATE_STOP)
@@ -159,13 +193,13 @@ ISR(INT1_vect)
       stopCounter();
       state = STATE_IDLE;
 
-      // TODO: use command data
-      LCD::cursorTo(1,0);
-      LCD::printIn("ADR=");
+      // Use command data
+#ifdef TEST_ON_LCD
       LCD::printDigit2(data[0], LCD::HEX);
-      LCD::cursorTo(2,0);
-      LCD::printIn("CMD=");
       LCD::printDigit2(data[1], LCD::HEX);
+#else
+      IR_Accessor::Callback(data[0],data[1]);
+#endif
     }
   }
 
@@ -177,10 +211,12 @@ ISR(TIMER0_OVF_vect)
   cli();
   // Failed to catch the sequence
   stopCounter();
-  /*if(state != STATE_IDLE)
+#ifdef TEST_ON_LCD
+  if(state != STATE_IDLE)
   {
     LCD::print('L');
-  }*/
+  }
+#endif
   state = STATE_IDLE;
   sei();
 }
