@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "twi.h"
 
-#define EEPROM_TWI_ID B10100000  // 24C02 slave 7bit address
+#define EEPROM_TWI_ID B1010000  // 24C02 slave 7bit address
 
 class EEPROM
 {
@@ -19,12 +19,12 @@ public:
       return ERROR0;
 
     // Select page start address and send A2 A1 A0 bits send write command
-    TWI::Write(EEPROM_TWI_ID);
+    TWI::Write((EEPROM_TWI_ID << 1) | 0);
     if (TWI::GetStatus() != 0x18)
       return ERROR1;
 
     // write rest of address
-    TWI::Write(0xFF & addr);
+    TWI::Write(addr);
     if (TWI::GetStatus() != 0x28)
       return ERROR2;
 
@@ -34,7 +34,7 @@ public:
       return ERROR3;
 
     //select devise and send read bit
-    TWI::Write(EEPROM_TWI_ID|1);
+    TWI::Write((EEPROM_TWI_ID << 1) | 1);
     if (TWI::GetStatus() != 0x40)
       return ERROR4;
 
@@ -44,7 +44,7 @@ public:
       *data++ = TWI::ReadACK();
       if (TWI::GetStatus() != 0x50)
         return ERROR5;
-    }  
+    }
     *data = TWI::ReadNACK();
     if (TWI::GetStatus() != 0x58)
       return ERROR6;
