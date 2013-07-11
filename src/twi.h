@@ -4,7 +4,7 @@
 // I2C bus routine
 
 // TWI SCL frequency
-#define F_TWI 50000UL
+#define F_TWI 10000UL
 
 #if F_CPU/F_TWI < 16
 # error "F_TWI is too hight. Should be less than F_CPU/16"

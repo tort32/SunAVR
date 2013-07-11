@@ -3,6 +3,7 @@
 #include "twi.h"
 #include "RTC.h"
 #include "IR.h"
+#include "EEPROM.h"
 
 void testLCD()
 {
@@ -54,6 +55,7 @@ void setTime()
 enum
 {
   CMD_NONE = 0xFF,
+  CMD_INIT = 0xFE,
 
   // LED IR Control Table
   CMD_UP = 0x09,
@@ -81,7 +83,7 @@ enum
   CMD_12 = 0x0F,
   CMD_SMOOTH = 0x0C,
 };
-volatile uint8_t runCmd = CMD_NONE;
+volatile uint8_t runCmd = CMD_INIT;
 
 void IRCallback(uint8_t adr, uint8_t cmd)
 {
@@ -170,8 +172,40 @@ void checkCmd()
       --line;
     }
 
-    LCD::cursorTo(1,0);
-    LCD::printDigit2(line, LCD::HEX);
+    uint8_t data[8];
+    uint8_t result = EEPROM::ReadPage(line, data, 8);
+    if(result == SUCCESS)
+    {
+      LCD::clear();
+      LCD::cursorTo(1,0);
+      LCD::printIn("PAGE=");
+      LCD::printDigit2(line, LCD::HEX);
+
+      /*_delay_ms(1000);
+      LCD::cursorTo(1,0);
+      for(uint8_t i = 0; i < 8; ++i)
+        LCD::printDigit2(data[i], LCD::HEX);*/
+
+      LCD::cursorTo(2,0);
+      //for(uint8_t i = 8; i < 16; ++i)
+      for(uint8_t i = 0; i < 8; ++i)
+        LCD::printDigit2(data[i], LCD::HEX);
+    }
+    else
+    {
+      LCD::clear();
+      LCD::cursorTo(1,0);
+
+      LCD::printIn("PAGE=");
+      LCD::printDigit2(line, LCD::HEX);
+
+      LCD::cursorTo(2,0);
+      LCD::printIn("ERROR ");
+      LCD::printDigit2(result, LCD::HEX);
+    }
+
+    /*LCD::cursorTo(1,0);
+    LCD::printDigit2(line, LCD::HEX);*/
 
     runCmd = CMD_NONE;
   }

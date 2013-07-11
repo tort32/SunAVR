@@ -1,3 +1,5 @@
+#pragma once
+
 // Device frequency
 // Should be in consistence with Makefile constant
 #define F_CPU 1000000UL
@@ -25,11 +27,19 @@
 
 #define CHK_BUT(pin,mask) ((~(pin))&(mask))
 
-/*
 enum
 {
-  ERROR = 0;
-  SUCCESS = 1;
-};
-*/
+  ERROR = 0,
+  SUCCESS = 1,
 
+  ERROR0 = 0xE0,
+  ERROR1 = 0xE1,
+  ERROR2 = 0xE2,
+  ERROR3 = 0xE3,
+  ERROR4 = 0xE4,
+  ERROR5 = 0xE5,
+  ERROR6 = 0xE6,
+  ERROR7 = 0xE7,
+  ERROR8 = 0xE8,
+  ERROR9 = 0xE9,
+};
