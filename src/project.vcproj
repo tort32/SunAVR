@@ -105,6 +105,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\colors.h"
+					>
+				</File>
+				<File
 					RelativePath=".\customfont.h"
 					>
 				</File>
@@ -122,6 +126,10 @@
 				</File>
 				<File
 					RelativePath=".\LCD.h"
+					>
+				</File>
+				<File
+					RelativePath=".\RGBLED.h"
 					>
 				</File>
 				<File

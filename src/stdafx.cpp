@@ -1,8 +1,15 @@
 #include "stdafx.h"
 #include "LCD.h"
 #include "RTC.h"
+#include "RGBLED.h"
 
+// RTC
 uint8_t RTC::rtc_bcd[8];
+
+// LED
+uint8_t LED::mLevel;
+uint8_t LED::mCounter;
+LED::Color LED::mColor(0xFF,0xFF,0xFF);
 
 /* ----------------------- hardware I/O abstraction ------------------------ */
 // PIN FUNCTION

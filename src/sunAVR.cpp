@@ -4,6 +4,8 @@
 #include "RTC.h"
 #include "IR.h"
 #include "EEPROM.h"
+#include "RGBLED.h"
+#include "colors.h"
 
 void testLCD()
 {
@@ -83,7 +85,7 @@ enum
   CMD_12 = 0x0F,
   CMD_SMOOTH = 0x0C,
 };
-volatile uint8_t runCmd = CMD_INIT;
+volatile uint8_t runCmd = CMD_OFF;
 
 void IRCallback(uint8_t adr, uint8_t cmd)
 {
@@ -101,6 +103,7 @@ void init(void)
   LCD::init();
   IR::init(&IRCallback);
   //TWI::Init();
+  LED::init();
   sei();
 }
 
@@ -158,64 +161,58 @@ void showTimeLoop()
   _delay_ms(200);
 }
 
-void checkCmd()
+inline void checkCmd()
 {
-  static uint8_t line = 0x00;
+  static LED::Color color(0x7F,0x7F,0x7F);
   if(runCmd != CMD_NONE)
   {
-    if(runCmd == CMD_UP) // UP
+    LED::disable(); // Off leds
+
+    switch(runCmd)
     {
-      ++line;
-    }
-    else if(runCmd == CMD_DOWN) // UP
-    {
-      --line;
-    }
-
-    uint8_t data[8];
-    uint8_t result = EEPROM::ReadPage(line, data, 8);
-    if(result == SUCCESS)
-    {
-      LCD::clear();
-      LCD::cursorTo(1,0);
-      LCD::printIn("PAGE=");
-      LCD::printDigit2(line, LCD::HEX);
-
-      /*_delay_ms(1000);
-      LCD::cursorTo(1,0);
-      for(uint8_t i = 0; i < 8; ++i)
-        LCD::printDigit2(data[i], LCD::HEX);*/
-
-      LCD::cursorTo(2,0);
-      //for(uint8_t i = 8; i < 16; ++i)
-      for(uint8_t i = 0; i < 8; ++i)
-        LCD::printDigit2(data[i], LCD::HEX);
-    }
-    else
-    {
-      LCD::clear();
-      LCD::cursorTo(1,0);
-
-      LCD::printIn("PAGE=");
-      LCD::printDigit2(line, LCD::HEX);
-
-      LCD::cursorTo(2,0);
-      LCD::printIn("ERROR ");
-      LCD::printDigit2(result, LCD::HEX);
+    case CMD_OFF:   LED::setColor(LED::Color(0,0,0)); break;
+    case CMD_ON:   LED::setColor(LED::Color(0xFF,0xFF,0xFF)); break;
+    case CMD_UP:    LED::incLevel(); break;
+    case CMD_DOWN:  LED::decLevel(); break;
+    case CMD_R:     LED::setColor(gColorTable[0]); break;
+    case CMD_G:     LED::setColor(gColorTable[1]); break;
+    case CMD_B:     LED::setColor(gColorTable[2]); break;
+    case CMD_W:     LED::setColor(gColorTable[3]); break;
+    case CMD_01:     LED::setColor(gColorTable[4]); break;
+    case CMD_02:     LED::setColor(gColorTable[5]); break;
+    case CMD_03:     LED::setColor(gColorTable[6]); break;
+    case CMD_04:     LED::setColor(gColorTable[7]); break;
+    case CMD_05:     LED::setColor(gColorTable[8]); break;
+    case CMD_06:     LED::setColor(gColorTable[9]); break;
+    case CMD_07:     LED::setColor(gColorTable[10]); break;
+    case CMD_08:     LED::setColor(gColorTable[11]); break;
+    case CMD_09:     LED::setColor(gColorTable[12]); break;
+    case CMD_10:     LED::setColor(gColorTable[13]); break;
+    case CMD_11:     LED::setColor(gColorTable[14]); break;
+    case CMD_12:     LED::setColor(gColorTable[15]); break;
     }
 
-    /*LCD::cursorTo(1,0);
-    LCD::printDigit2(line, LCD::HEX);*/
+    LED::Color level = LED::getLevel();
+    LCD::cursorTo(1,0);
+    LCD::printIn("PWM=");
+    LCD::printDigit2(level.R, LCD::HEX);
+    LCD::print('.');
+    LCD::printDigit2(level.G, LCD::HEX);
+    LCD::print('.');
+    LCD::printDigit2(level.B, LCD::HEX);
 
     runCmd = CMD_NONE;
   }
-  _delay_ms(100);
 }
 
-void loop(void)
+inline void loop(void)
 {
   //showTimeLoop();
-  checkCmd();
+  uint8_t cnt = LED::update();
+  if(cnt == 0)
+  {
+    checkCmd();
+  }
 }
 
 /* ------------------------------------------------------------------------- */
