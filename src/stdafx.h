@@ -10,6 +10,7 @@
 #include <avr/wdt.h>
 #include <util/delay.h>
 #include <inttypes.h>
+#include <stddef.h>
 #include "binary.h"
 #include "customfont.h"
 

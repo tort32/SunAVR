@@ -30,9 +30,11 @@
 // I got 5ms for Start signal and 2,75ms for Repeat signal
 // This is 78 and 43 ticks
 
+// IR class contains only user code public methods
+// NOTE: Signal capturing code is hidden in IR.cpp
 class IR
 {
-  friend class IR_Accessor;
+  friend class IR_SignalCapture;
 public:
   typedef void (*CommandCallback)(uint8_t, uint8_t);
 

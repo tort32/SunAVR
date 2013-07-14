@@ -141,6 +141,14 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="modules"
+				>
+				<File
+					RelativePath=".\SYSTEM.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\Makefile"

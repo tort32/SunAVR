@@ -2,6 +2,7 @@
 #include "LCD.h"
 #include "RTC.h"
 #include "RGBLED.h"
+#include "SYSTEM.h"
 
 // RTC
 uint8_t RTC::rtc_bcd[8];
@@ -10,6 +11,9 @@ uint8_t RTC::rtc_bcd[8];
 uint8_t LED::mLevel;
 uint8_t LED::mCounter;
 LED::Color LED::mColor(0xFF,0xFF,0xFF);
+
+// SYSTEM
+volatile uint8_t SYSTEM::mRunCmd;
 
 /* ----------------------- hardware I/O abstraction ------------------------ */
 // PIN FUNCTION
