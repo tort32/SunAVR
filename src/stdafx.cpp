@@ -14,6 +14,8 @@ LED::Color LED::mColor(0xFF,0xFF,0xFF);
 
 // SYSTEM
 volatile uint8_t SYSTEM::mRunCmd;
+LED::Color SYSTEM::mColor;
+uint8_t SYSTEM::mState;
 
 /* ----------------------- hardware I/O abstraction ------------------------ */
 // PIN FUNCTION
@@ -39,3 +41,13 @@ volatile uint8_t SYSTEM::mRunCmd;
 // PC5 I2C SCL
 
 //////////////////////////////////////////////////////////////////////////
+
+void incByte(uint8_t& data)
+{
+  if(data != 255) ++data;
+}
+
+void decByte(uint8_t& data)
+{
+  if(data != 0) --data;
+}

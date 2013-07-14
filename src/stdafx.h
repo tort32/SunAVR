@@ -44,3 +44,7 @@ enum
   ERROR8 = 0xE8,
   ERROR9 = 0xE9,
 };
+
+// byte data inc/dec without overflow
+void incByte(uint8_t& data);
+void decByte(uint8_t& data);
