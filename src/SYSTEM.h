@@ -63,22 +63,57 @@ public:
 public:
   static void init()
   {
-     mRunCmd = CMD_ON;
+     mRunCmd = CMD_NONE;//CMD_ON;
      mState = STATE_INPUT_CMD;
 
      LCD::init();
      IR::init(&IRCallback);
      //TWI::Init();
      LED::init();
+
+     mColor = LED::Color(0xFF,0x1F,0x4);
+     LED::setColor(mColor);
   }
 
   inline static void update()
   {
     uint8_t cnt = LED::update();
-    if(cnt == 0)
+    /*if(cnt == 0)
     {
-      checkCmd();
+      static uint8_t cnt2 = 0;
+      //checkCmd();
+      ++cnt2;
+      if(cnt2 == 0x20)
+      {
+        //UpdateCycle();
+        cnt2 = 0;
+      }
+    }*/
+  }
+
+  static void UpdateCycle()
+  {
+    LED::disable(); // Off leds
+
+    static uint8_t level = 0x4;
+    static bool up = false;
+    if(up)
+    {
+      if(++level == LED_LEVEL_MAX)
+      {
+        up = false;
+      }
     }
+    else
+    {
+      if(--level == 0x00)
+      {
+        up = true;
+      }
+    }
+    LED::setLevel(level);
+
+    CheckInputPost();
   }
 private:
   static void IRCallback(uint8_t adr, uint8_t cmd)
@@ -115,8 +150,8 @@ private:
       switch(mState & STATE_MASK)
       {
       case STATE_INPUT_CMD: CheckInputCmd(); break;
-      case STATE_INPUT_HEX: CheckInputHex(); break;
-      case STATE_INPUT_TUNE: CheckInputTune(); break;
+      //case STATE_INPUT_HEX: CheckInputHex(); break;
+      //case STATE_INPUT_TUNE: CheckInputTune(); break;
       }
 
       LED::setColor(mColor);
@@ -133,7 +168,7 @@ private:
     uint8_t comp = digit >> 1; // 0 - R, 1 - G, 2 - B
     uint8_t shift = (digit % 2) ? 0 : 4;
     uint8_t mask = 0x0F << shift; // 0xF0 - HI, 0x0F - LO
-    wrtbits(*((uint8_t*)&mColor + comp), val<<shift, mask);
+    wrtbits(mColor.getComponent(comp), val<<shift, mask);
   }
 
   static void CheckInputCmd()
@@ -198,8 +233,8 @@ private:
     uint8_t comp = mState & STATE_SUB_MASK;
     switch(mRunCmd)
     {
-    case CMD_R: incByte(*((uint8_t*)&mColor + comp)); break;
-    case CMD_G: decByte(*((uint8_t*)&mColor + comp)); break;
+    case CMD_R: incByte(mColor.getComponent(comp)); break;
+    case CMD_G: decByte(mColor.getComponent(comp)); break;
     case CMD_FLASH:   mState = STATE_INPUT_CMD; break;
     case CMD_FADE:    mState = STATE_INPUT_HEX; break;
     case CMD_SMOOTH:
@@ -221,7 +256,18 @@ private:
     LCD::print('.');
     LCD::printDigit2(level.B, LCD::HEX);
 
+    LED::Color preScl = LED::getPreScl();
     LCD::cursorTo(2,0);
+
+    LCD::printIn("SCL=");
+    LCD::printDigit2(preScl.R, LCD::HEX);
+    LCD::print('.');
+    LCD::printDigit2(preScl.G, LCD::HEX);
+    LCD::print('.');
+    LCD::printDigit2(preScl.B, LCD::HEX);
+
+
+    /*LCD::cursorTo(2,0);
     if(mState == STATE_INPUT_CMD)
     {
       LCD::printIn("NORMAL ");
@@ -240,7 +286,7 @@ private:
     {
       LCD::printIn("INPUT ");
       LCD::print('0' | (mState & STATE_SUB_MASK));
-    }
+    }*/
   }
 
 private:

@@ -10,7 +10,12 @@ uint8_t RTC::rtc_bcd[8];
 // LED
 uint8_t LED::mLevel;
 uint8_t LED::mCounter;
-LED::Color LED::mColor(0xFF,0xFF,0xFF);
+LED::Color LED::mColor;
+LED::Color LED::mValue;
+#ifdef LED_PRECISE
+LED::Color LED::mPreScl;
+LED::Color LED::mPreSclCnt;
+#endif
 
 // SYSTEM
 volatile uint8_t SYSTEM::mRunCmd;
