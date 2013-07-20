@@ -63,10 +63,13 @@ public:
 public:
   static void init()
   {
-     mRunCmd = CMD_NONE;//CMD_ON;
+     mRunCmd = CMD_OFF;
      mState = STATE_INPUT_CMD;
 
      LCD::init();
+
+     LCD::printIn("TEST");
+
      IR::init(&IRCallback);
      //TWI::Init();
      LED::init();
@@ -78,17 +81,19 @@ public:
   inline static void update()
   {
     uint8_t cnt = LED::update();
-    /*if(cnt == 0)
+    if(cnt == 0)
     {
+      checkCmd();
+      /*
       static uint8_t cnt2 = 0;
-      //checkCmd();
       ++cnt2;
       if(cnt2 == 0x20)
       {
         //UpdateCycle();
         cnt2 = 0;
       }
-    }*/
+      */
+    }
   }
 
   static void UpdateCycle()
@@ -256,7 +261,7 @@ private:
     LCD::print('.');
     LCD::printDigit2(level.B, LCD::HEX);
 
-    LED::Color preScl = LED::getPreScl();
+    /*LED::Color preScl = LED::getPreScl();
     LCD::cursorTo(2,0);
 
     LCD::printIn("SCL=");
@@ -264,7 +269,7 @@ private:
     LCD::print('.');
     LCD::printDigit2(preScl.G, LCD::HEX);
     LCD::print('.');
-    LCD::printDigit2(preScl.B, LCD::HEX);
+    LCD::printDigit2(preScl.B, LCD::HEX);*/
 
 
     /*LCD::cursorTo(2,0);
