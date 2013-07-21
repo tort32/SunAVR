@@ -28,6 +28,7 @@ private:
 
     STATE_ERROR = 0x80,
   };
+#if F_CPU == 1000000UL
   enum {
     TCNT_LOW = 10, // threshold = 10
     // '0' = 18 ticks
@@ -39,6 +40,23 @@ private:
     TCNT_START = 60, // threshold = 60
     // Start = 78 ticks
   };
+#else
+#if F_CPU == 8000000UL
+  enum {
+    TCNT_LOW = 20, // threshold = 20
+    // '0' = 35 ticks
+    TCNT_ZERO =40, // threshold = 40
+    // '1' = 70 ticks
+    TCNT_ONE = 80, // threshold = 80
+    TCNT_REPEAT = 80,
+    // Repeat = 86 ticks
+    TCNT_START = 120, // threshold = 120
+    // Start = 156 ticks
+  };
+#else
+  # error "IR timings inconsistent with F_CPU"
+#endif
+#endif
 public:
   inline static void init()
   {
@@ -55,7 +73,13 @@ public:
   static void startCounter()
   {
     TCNT0 = 0x00; // init counter
+#if F_CPU == 1000000UL
     TCCR0 = _BV(CS01) | _BV(CS00); // set prescaler to 64
+#else
+#if F_CPU == 8000000UL
+    TCCR0 = _BV(CS02); // set prescaler to 256
+#endif
+#endif
   }
 
   static void stopCounter()

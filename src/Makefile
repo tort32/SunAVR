@@ -1,10 +1,10 @@
 # Тип используемого микроконтроллера
 MCU = atmega8
 # Частота кварцевого резонатора (Hz)
-F_CPU = 1000000
+F_CPU = 8000000
 # Название файла проекта (без расширения)
 TARGET = sunAVR
-SOURCE = $(TARGET) stdafx LCD IR
+SOURCE = $(TARGET) stdafx LCD IR RGBLED SYSTEM
 # Используемый программатор (для AVRDUDE)
 AVRDUDE_PROGRAMMER = usbtiny
 # Порт, к которому подключен программатор

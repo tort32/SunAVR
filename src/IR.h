@@ -16,11 +16,11 @@
 //  |  |  |  | 
 // -+  +--+  +- LO
 
-// Counter prescaler set by 64
-// Computing counter ticks according to F_CPU:
-// Ticks = Time*F_CPU/64
 
-// For F_CPU = 1MHz:
+// Computing counter ticks according to F_CPU:
+// Ticks = Time*F_CPU/TimerPrescale
+
+// For F_CPU = 1MHz and Presacale = 64:
 // '0' signal = 1.12ms = 18 ticks
 // '1' signal = 2.24ms = 35 ticks
 // Repeat = 9 + 2.25 = 11.25ms = 175 ticks
@@ -29,6 +29,12 @@
 // For some reason on my real remote controls
 // I got 5ms for Start signal and 2,75ms for Repeat signal
 // This is 78 and 43 ticks
+
+// For F_CPU = 8MHz and Presacale = 256:
+// '0' signal = 1.12ms = 35 ticks
+// '1' signal = 2.24ms = 70 ticks
+// Repeat = 2.75ms = 86 ticks
+// Start = 5.00ms = 156 ticks
 
 // IR class contains only user code public methods
 // NOTE: Signal capturing code is hidden in IR.cpp

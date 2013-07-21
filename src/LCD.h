@@ -2,8 +2,8 @@
 #include "stdafx.h"
 
 // HD04408 LCD module with 4 bit data bus
-class LCD {
-public:
+namespace LCD
+{
   enum Command //command bytes for LCD
   {
     CLEAR    = 0x01, // 0000.0001   Clear display
@@ -59,36 +59,23 @@ public:
     HEX = 16,
   };
 
-public:
-  static void commandWrite(uint8_t value);
-  static void init();
-  static void print(uint8_t value);
-  static void printIn(const char* msg);
-  static void printIn(const char* msg, uint8_t len);
-  static void clear();
-  static void home();
-  //non-core---------------
-  static void cursorTo(uint8_t line_num, uint8_t x);
-  static void leftScroll(uint8_t chars, uint8_t delay_time);
-  static void setDisplay(bool display, bool cursor, bool blink);
-  static void setBacklight(uint8_t level);
+  void init();
+  void commandWrite(uint8_t value);
+  void print(uint8_t value);
+  void printIn(const char* msg);
+  void printIn(const char* msg, uint8_t len);
+  void clear();
+  void home();
+  
+  void cursorTo(uint8_t line_num, uint8_t x);
+  void leftScroll(uint8_t chars, uint8_t delay_time);
+  void setDisplay(bool display, bool cursor, bool blink);
+  void setBacklight(uint8_t level);
 
-  static void printDigit(uint8_t value);
-  static void printDigit2(uint8_t value, DigitBase base = DEC);
-  static void printDigit3(uint8_t value, DigitBase base = DEC);
+  void printDigit(uint8_t value);
+  void printDigit2(uint8_t value, DigitBase base = DEC);
+  void printDigit3(uint8_t value, DigitBase base = DEC);
 
-  static void buildChar(uint8_t location, const uint8_t charmap[8]);
-  static void buildChars(const uint8_t charmap[64]);
-  //end of non-core--------
-
-  //4bit only, therefore ideally private but may be needed by user
-  static void commandWriteNibble(uint8_t nibble);
-private:
-  static void initBacklight();
-  static void pulseEnablePin();
-  static void pushNibble(uint8_t nibble);
-  static void pushByte(uint8_t value);
-
-private:
-  static const uint8_t mLines = 2; // 1 or 2 lines
+  void buildChar(uint8_t location, const uint8_t charmap[8]);
+  void buildChars(const uint8_t charmap[64]);
 };

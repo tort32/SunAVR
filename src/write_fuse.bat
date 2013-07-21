@@ -1,0 +1,1 @@
+avrdude -p m8 -c usbtiny -U lfuse:w:0xe4:m -U hfuse:w:0xd9:m
