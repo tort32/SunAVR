@@ -31,13 +31,3 @@ uint8_t RTC::rtc_bcd[8];
 // PC5 I2C SCL
 
 //////////////////////////////////////////////////////////////////////////
-
-void incByte(uint8_t& data)
-{
-  if(data != 255) ++data;
-}
-
-void decByte(uint8_t& data)
-{
-  if(data != 0) --data;
-}

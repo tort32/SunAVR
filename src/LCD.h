@@ -74,7 +74,7 @@ namespace LCD
 
   void printDigit(uint8_t value);
   void printDigit2(uint8_t value, DigitBase base = DEC);
-  void printDigit3(uint8_t value, DigitBase base = DEC);
+  void printDigit3(uint16_t value, DigitBase base = DEC);
 
   void buildChar(uint8_t location, const uint8_t charmap[8]);
   void buildChars(const uint8_t charmap[64]);

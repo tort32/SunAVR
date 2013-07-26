@@ -46,5 +46,21 @@ enum
 };
 
 // byte data inc/dec without overflow
-void incByte(uint8_t& data);
-void decByte(uint8_t& data);
+inline void incByte(uint8_t& data, uint8_t max = 255)
+{
+  if(data != max) ++data;
+}
+
+inline void decByte(uint8_t& data, uint8_t min = 0)
+{
+  if(data != min) --data;
+}
+
+inline uint16_t attenuate(uint16_t data, uint8_t semilevels)
+{
+  uint8_t level = (semilevels >> 1);
+  uint16_t val = data >> level;
+  if(semilevels % 2)
+    val -= data >> (level + 2); // -25%
+  return val;
+}

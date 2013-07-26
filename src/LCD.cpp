@@ -248,7 +248,7 @@ namespace LCD {
   }
 
   // draw three digit number
-  void printDigit3(uint8_t value, DigitBase base)
+  void printDigit3(uint16_t value, DigitBase base)
   {
     uint8_t tmp = value / base;
     uint8_t d3 = tmp / base;
