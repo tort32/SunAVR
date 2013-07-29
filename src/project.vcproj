@@ -99,6 +99,14 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="aux"
+				>
+				<File
+					RelativePath=".\AsyncCall.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -113,6 +121,10 @@
 				Name="aux"
 				>
 				<File
+					RelativePath=".\AsyncCall.h"
+					>
+				</File>
+				<File
 					RelativePath=".\binary.h"
 					>
 				</File>
@@ -122,6 +134,10 @@
 				</File>
 				<File
 					RelativePath=".\customfont.h"
+					>
+				</File>
+				<File
+					RelativePath=".\FIFO.h"
 					>
 				</File>
 			</Filter>

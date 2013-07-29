@@ -20,33 +20,61 @@
 #define CONTROL_BL _BV(PB3)
 //#define CONTROL_RW _BV(PB4)
 
+#define ASYNC_WORK 1
+
+#ifdef ASYNC_WORK
+#include "AsyncCall.h"
+#include "FIFO.h"
+#endif
+
 //--------------------------------------------------------
 
 namespace LCD {
 
   const uint8_t mLines = 2; // 1 or 2 lines
 
+#ifdef ASYNC_WORK
+  struct BufferData
+  {
+    enum Type {
+      COMMAND,
+      CHAR,
+    } mType;
+    uint8_t mData;
+    BufferData() {};
+    BufferData(Type type, uint8_t data): mType(type), mData(data) {};
+    void set(Type type, uint8_t data)
+    {
+       mType = type;
+       mData = data;
+    }
+  };
+
+  FIFO<BufferData,64> mBuffer;
+  volatile uint8_t mProcessingBuffer = 0;
+#endif
+
   //pulse the Enable pin high (for a microsecond).
   //This clocks whatever command or data is in DB4~7 into the LCD controller.
   void pulseEnablePin(){
     // send a pulse to enable
     setbits(CONTROL_PORT, CONTROL_EN);
-    _delay_ms(1); // enable pulse must be >1.2us
+    _delay_us(2); // enable pulse must be >1.2us
     clrbits(CONTROL_PORT, CONTROL_EN);
   }
 
   //push a nibble of data through the the LCD's DB4~7 pins, clocking with the Enable pin.
   //We don't care what RS and RW are, here.
-  void pushNibble(uint8_t value){
-    wrtbits(DATA_PORT, DATA_PINS_LO_NIBBLE(value), DATA_PINS_MASK);
+  void pushNibble(uint8_t val){
+    wrtbits(DATA_PORT, DATA_PINS_LO_NIBBLE(val), DATA_PINS_MASK);
     pulseEnablePin();
   }
 
   //push a byte of data through the LCD's DB4~7 pins, in two steps, clocking each with the enable pin.
-  void pushByte(uint8_t value){
-    wrtbits(DATA_PORT, DATA_PINS_HI_NIBBLE(value), DATA_PINS_MASK);
+  void pushByte(uint8_t val){
+    wrtbits(DATA_PORT, DATA_PINS_HI_NIBBLE(val), DATA_PINS_MASK);
     pulseEnablePin();
-    wrtbits(DATA_PORT, DATA_PINS_LO_NIBBLE(value), DATA_PINS_MASK);
+    wrtbits(DATA_PORT, DATA_PINS_LO_NIBBLE(val), DATA_PINS_MASK);
     pulseEnablePin();
   }
 
@@ -60,54 +88,119 @@ namespace LCD {
     _delay_us(40); // commands need > 37us to settle
   }
 
-  void commandWrite(uint8_t value) {
+  void commandWrite(uint8_t val)
+  {
     clrbits(CONTROL_PORT, CONTROL_RS);
   #ifdef USING_RW
     clrbits(CONTROL_PORT, CONTROL_RW);
   #endif
-    pushByte(value);
+    pushByte(val);
     _delay_us(40); // commands need > 37us to settle
   }
 
+#ifdef ASYNC_WORK
+  void ProcessBuffer()
+  {
+    if(mBuffer.size())
+    {
+      const BufferData& data = mBuffer.pop_front();
+      if(data.mType == BufferData::CHAR)
+      {
+        setbits(CONTROL_PORT, CONTROL_RS); // data
+      }
+      else
+      {
+        clrbits(CONTROL_PORT, CONTROL_RS); // command
+      }
+#ifdef USING_RW
+      clrbits(CONTROL_PORT, CONTROL_RW);
+#endif
+      pushByte(data.mData);
+
+      // wait 40us and process next command
+      AsyncCall::delayTask(40, &LCD::ProcessBuffer);
+    }
+    else
+    {
+      mProcessingBuffer = 0;
+    }
+  }
+
+  void CheckBufferAndProcess()
+  {
+    if(mProcessingBuffer)
+      return; // Next call will be made by timer interruption handler
+
+    mProcessingBuffer = 1;
+    AsyncCall::delayTask(40, &LCD::ProcessBuffer);
+  }
+#endif
+
   //print the given character at the current cursor position. overwrites, doesn't insert.
-  void print(uint8_t value) {
+  void print(uint8_t val)
+  {
+#ifdef ASYNC_WORK
+    mBuffer.push_back().set(BufferData::CHAR, val);
+    CheckBufferAndProcess();
+#else
     //set the RS and RW pins to show we're writing data
     setbits(CONTROL_PORT, CONTROL_RS);
   #ifdef USING_RW
     clrbits(CONTROL_PORT, CONTROL_RW);
   #endif
     //let pushByte worry about the intricacies of Enable, nibble order.
-    pushByte(value);
+    pushByte(val);
     _delay_us(40); // commands need > 37us to settle
+#endif
   }
 
   //print the given string to the LCD at the current cursor position.  overwrites, doesn't insert.
   //While I don't understand why this was named printIn (PRINT IN?) in the original LiquidCrystal library, I've preserved it here to maintain the interchangeability of the two libraries.
-  void printIn(const char* msg) {
+  void printIn(const char* msg)
+  {
+#ifdef ASYNC_WORK
+    for(uint8_t i = 0; msg[i] != 0; i++)
+    {
+      mBuffer.push_back().set(BufferData::CHAR, msg[i]);
+    }
+    CheckBufferAndProcess();
+#else
     setbits(CONTROL_PORT, CONTROL_RS);
   #ifdef USING_RW
     clrbits(CONTROL_PORT, CONTROL_RW);
   #endif
-    uint8_t i;  //fancy int.  avoids compiler warning when comparing i with strlen()'s uint8_t
-    uint8_t len = strlen(msg);
-    for (i=0; i < len; i++){
+    for(uint8_t i = 0; msg[i] != 0; i++)
+    {
       //let pushByte worry about the intricacies of Enable, nibble order.
       pushByte(msg[i]);
       _delay_us(40); // commands need > 37us to settle
     }
+#endif
   }
 
-  void printIn(const char* msg, uint8_t len) 
+  void printIn(const char* msg, uint8_t len)
   {
+#ifdef ASYNC_WORK
+    for(uint8_t i = 0; i < len; i++)
+    {
+      mBuffer.push_back().set(BufferData::CHAR, msg[i]);
+    }
+    CheckBufferAndProcess();
+#else
     setbits(CONTROL_PORT, CONTROL_RS);
-    for (uint8_t i=0;i < len ;i++) {
+#ifdef USING_RW
+    clrbits(CONTROL_PORT, CONTROL_RW);
+#endif
+    for(uint8_t i = 0; i < len; i++) {
       pushByte(msg[i]);
       _delay_us(40); // commands need > 37us to settle
     }
+#endif
   }
 
   //send the clear screen command to the LCD
-  void clear(){
+  void clear()
+  {
     clrbits(CONTROL_PORT, CONTROL_RS);
   #ifdef USING_RW
     clrbits(CONTROL_PORT, CONTROL_RW);
@@ -116,7 +209,8 @@ namespace LCD {
     _delay_us(1640); // 1.64ms
   }
 
-  void home(){
+  void home()
+  {
     clrbits(CONTROL_PORT, CONTROL_RS);
   #ifdef USING_RW
     clrbits(CONTROL_PORT, CONTROL_RW);
@@ -175,7 +269,9 @@ namespace LCD {
       // Entry mode: 0000 01IS (Increment,Shift)
       commandWrite(ENTRY | INCREMENT);
     }
-    
+#ifdef ASYNC_WORK
+    mProcessingBuffer = false;
+#endif
   }
 
 
@@ -187,7 +283,13 @@ namespace LCD {
     if (mLines == 2 && line_num == 2){
       x += 0x40;
     }
-    commandWrite(SETDDRAM | x);
+    uint8_t cmd = SETDDRAM | x;
+#ifdef ASYNC_WORK
+    mBuffer.push_back().set(BufferData::COMMAND, cmd);
+    CheckBufferAndProcess();
+#else
+    commandWrite(cmd);
+#endif
   }
 
   //scroll whole display to left
@@ -201,10 +303,16 @@ namespace LCD {
   // Enables LCD, cursor and cursor blinking
   void setDisplay(bool display, bool cursor, bool blink)
   {
-    commandWrite(DISPLAY |
+    uint8_t cmd = DISPLAY |
       (display ? DISPLAY_ON : DISPLAY_OFF) |
       (cursor ? CURSOR_ON : CURSOR_OFF) |
-      (blink ? BLINK_ON : BLINK_OFF) );
+      (blink ? BLINK_ON : BLINK_OFF);
+#ifdef ASYNC_WORK
+    mBuffer.push_back().set(BufferData::COMMAND, cmd);
+    CheckBufferAndProcess();
+#else
+    commandWrite(cmd);
+#endif
   }
 
   // Write char into CGRAM memory

@@ -30,6 +30,9 @@ namespace LED
     };
     Color() {};
     Color(uint8_t red, uint8_t green, uint8_t blue): R(red << ADD_BITS), G(green << ADD_BITS), B(blue << ADD_BITS) {};
+
+    // Attenuate color
+    // level = 0..15
     inline Color attenuate(uint8_t level) const {
       Color col;
       col.R = ::attenuate(R, level);
@@ -37,6 +40,7 @@ namespace LED
       col.B = ::attenuate(B, level);
       return col;
     }
+
     inline Color operator+(const Color& add) const {
       Color col;
       col.R = R + add.R;
@@ -44,10 +48,15 @@ namespace LED
       col.B = B + add.B;
       return col;
     }
+
+    // Interpolate between two colors with attenuation
     inline Color interpolate(const Color& col, uint8_t semilevels) const
     {
       return this->attenuate(semilevels) + col.attenuate(15 - semilevels);
     }
+
+    // Interpolate between two colors.
+    // semilevels = 0..15 (0 = source color, 16 = destination color)
     Color interpolateLinear(const Color& col, uint8_t semilevels) const
     {
       int16_t deltaR = (int16_t)col.R - (int16_t)R;

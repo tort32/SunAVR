@@ -60,13 +60,13 @@ namespace LCD
   };
 
   void init();
-  void commandWrite(uint8_t value);
+  //void commandWrite(uint8_t value);
   void print(uint8_t value);
   void printIn(const char* msg);
   void printIn(const char* msg, uint8_t len);
   void clear();
   void home();
-  
+
   void cursorTo(uint8_t line_num, uint8_t x);
   void leftScroll(uint8_t chars, uint8_t delay_time);
   void setDisplay(bool display, bool cursor, bool blink);

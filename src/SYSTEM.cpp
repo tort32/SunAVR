@@ -16,9 +16,9 @@ namespace SYSTEM
 
   // Animation counter updates in 300Hz
   //const uint32_t ANIM_COUNTER_MAX = 256 * 256; // Should be the power of 2 to generate effective code
-#define ANIM_COUNTER_MAX 0x10000
-  const uint8_t ANIM_SPEED_MAX = 8;
-  const uint8_t mAnimSpeedTable[ANIM_SPEED_MAX] = {1, 2, 3, 5, 7, 10, 14, 20};
+#define ANIM_COUNTER_MAX 0x4000
+  const uint8_t ANIM_SPEED_LEVEL_MAX = 8;
+  const uint8_t mAnimSpeedTable[ANIM_SPEED_LEVEL_MAX] = {1, 2, 3, 5, 7, 10, 14, 20};
 
   enum
   {
@@ -90,6 +90,8 @@ namespace SYSTEM
      mColor = LED::Color(0xFF,0xFF,0xFF);
      LED::setColor(mColor);
      LED::setLevel(0);
+
+     setbits(DDRD, _BV(PD6) | _BV(PD7));
   }
 
   void updateAnimFlash()
@@ -140,7 +142,7 @@ namespace SYSTEM
     LED::setColor(gColorTable[colorSeq[seqPart]].interpolateLinear(gColorTable[colorSeq[seqPart+1]], semilevel));
   }
 
-  void UpdateAnim()
+  uint16_t UpdateAnim()
   {
     mAnimCnt += mAnimSpeedTable[mAnimSpeed];
 
@@ -157,6 +159,31 @@ namespace SYSTEM
     case STATE_ANIM_FADE:   updateAnimFade(); break;
     case STATE_ANIM_SMOOTH: updateAnimSmooth(); break;
     }
+
+    return mAnimCnt;
+  }
+
+  void ReadClock()
+  {
+    setbits(PORTD, _BV(PD6));
+    RTC::read();
+    clrbits(PORTD, _BV(PD6));
+  }
+
+  void UpdateClock()
+  {
+    setbits(PORTD, _BV(PD7));
+    LCD::cursorTo(2,8);
+    LCD::printDigit(RTC::get(RTC::HOUR_HI));
+    LCD::printDigit(RTC::get(RTC::HOUR_LO));
+    LCD::print(':');
+    LCD::printDigit(RTC::get(RTC::MIN_HI));
+    LCD::printDigit(RTC::get(RTC::MIN_LO));
+    LCD::print(':');
+    LCD::printDigit(RTC::get(RTC::SEC_HI));
+    LCD::printDigit(RTC::get(RTC::SEC_LO));
+    //LCD::printIn("012345678");
+    clrbits(PORTD, _BV(PD7));
   }
 
   void IRCallback(uint8_t adr, uint8_t cmd)
@@ -179,7 +206,7 @@ namespace SYSTEM
       if(mAnimState == STATE_ANIM_NONE)
         LED::incLevel();
       else
-        incByte(mAnimSpeed, ANIM_SPEED_MAX - 1);
+        incByte(mAnimSpeed, ANIM_SPEED_LEVEL_MAX - 1);
     }
     else if(mRunCmd == CMD_DOWN)
     {
