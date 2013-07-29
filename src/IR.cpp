@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "IR.h"
-#include "AsyncCall.h"
 
 //#define TEST_ON_LCD 1
+
+//#define STOP_ON_ERROR 1
 
 #ifdef TEST_ON_LCD
 #include "LCD.h"
@@ -62,7 +63,7 @@ public:
   inline static void init()
   {
     // Configure 8-bit Counter0 for the time measurement
-    AsyncCall::init();
+    setbits(TIMSK,_BV(TOIE0));
 
     // Configure INT input
     MCUCR = _BV(ISC11) | _BV(ISC10); // generate INT1 on rising edge
@@ -85,8 +86,7 @@ public:
 
   static void stopCounter()
   {
-    //TCCR0 = 0x00; // Stop counter
-    AsyncCall::continueTask(); // release Counter
+    TCCR0 = 0x00; // Stop counter
   }
 
   static void stopSignalCapture()
@@ -108,7 +108,6 @@ public:
     if(mState == STATE_IDLE)
     {
       // First pulse, begin capturing
-      AsyncCall::pauseTask(&IR_SignalCapture::stopSignalCapture);
       startCounter();
       mState = STATE_START;
     }
@@ -139,7 +138,9 @@ public:
       else
       {
         // Signal too short
+#ifdef STOP_ON_ERROR
         stopCounter();
+#endif
         mState = STATE_ERROR;
 #ifdef TEST_ON_LCD
         LCD::print('!');
@@ -199,7 +200,9 @@ public:
       else
       {
         // Signal too long
+#ifdef STOP_ON_ERROR
         stopCounter();
+#endif
         mState = STATE_ERROR;
 #ifdef TEST_ON_LCD
         LCD::print('?');
@@ -254,9 +257,9 @@ ISR(INT1_vect)
   sei();
 }
 
-/*ISR(TIMER0_OVF_vect)
+ISR(TIMER0_OVF_vect)
 {
   cli();
   IR_SignalCapture::stopSignalCapture();
   sei();
-}*/
+}

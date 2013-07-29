@@ -4,7 +4,7 @@ MCU = atmega8
 F_CPU = 8000000
 # Название файла проекта (без расширения)
 TARGET = sunAVR
-SOURCE = $(TARGET) stdafx AsyncCall LCD IR RGBLED SYSTEM
+SOURCE = $(TARGET) stdafx LCD IR RGBLED SYSTEM
 # Используемый программатор (для AVRDUDE)
 AVRDUDE_PROGRAMMER = usbtiny
 # Порт, к которому подключен программатор

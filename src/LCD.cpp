@@ -20,10 +20,7 @@
 #define CONTROL_BL _BV(PB3)
 //#define CONTROL_RW _BV(PB4)
 
-#define ASYNC_WORK 1
-
-#ifdef ASYNC_WORK
-#include "AsyncCall.h"
+#ifdef LCD_BUFFERED_INPUT
 #include "FIFO.h"
 #endif
 
@@ -33,7 +30,7 @@ namespace LCD {
 
   const uint8_t mLines = 2; // 1 or 2 lines
 
-#ifdef ASYNC_WORK
+#ifdef LCD_BUFFERED_INPUT
   struct BufferData
   {
     enum Type {
@@ -51,7 +48,6 @@ namespace LCD {
   };
 
   FIFO<BufferData,64> mBuffer;
-  volatile uint8_t mProcessingBuffer = 0;
 #endif
 
   //pulse the Enable pin high (for a microsecond).
@@ -98,8 +94,8 @@ namespace LCD {
     _delay_us(40); // commands need > 37us to settle
   }
 
-#ifdef ASYNC_WORK
-  void ProcessBuffer()
+#ifdef LCD_BUFFERED_INPUT
+  void updateBuffer()
   {
     if(mBuffer.size())
     {
@@ -116,32 +112,15 @@ namespace LCD {
       clrbits(CONTROL_PORT, CONTROL_RW);
 #endif
       pushByte(data.mData);
-
-      // wait 40us and process next command
-      AsyncCall::delayTask(40, &LCD::ProcessBuffer);
     }
-    else
-    {
-      mProcessingBuffer = 0;
-    }
-  }
-
-  void CheckBufferAndProcess()
-  {
-    if(mProcessingBuffer)
-      return; // Next call will be made by timer interruption handler
-
-    mProcessingBuffer = 1;
-    AsyncCall::delayTask(40, &LCD::ProcessBuffer);
   }
 #endif
 
   //print the given character at the current cursor position. overwrites, doesn't insert.
   void print(uint8_t val)
   {
-#ifdef ASYNC_WORK
+#ifdef LCD_BUFFERED_INPUT
     mBuffer.push_back().set(BufferData::CHAR, val);
-    CheckBufferAndProcess();
 #else
     //set the RS and RW pins to show we're writing data
     setbits(CONTROL_PORT, CONTROL_RS);
@@ -158,12 +137,11 @@ namespace LCD {
   //While I don't understand why this was named printIn (PRINT IN?) in the original LiquidCrystal library, I've preserved it here to maintain the interchangeability of the two libraries.
   void printIn(const char* msg)
   {
-#ifdef ASYNC_WORK
+#ifdef LCD_BUFFERED_INPUT
     for(uint8_t i = 0; msg[i] != 0; i++)
     {
       mBuffer.push_back().set(BufferData::CHAR, msg[i]);
     }
-    CheckBufferAndProcess();
 #else
     setbits(CONTROL_PORT, CONTROL_RS);
   #ifdef USING_RW
@@ -180,12 +158,11 @@ namespace LCD {
 
   void printIn(const char* msg, uint8_t len)
   {
-#ifdef ASYNC_WORK
+#ifdef LCD_BUFFERED_INPUT
     for(uint8_t i = 0; i < len; i++)
     {
       mBuffer.push_back().set(BufferData::CHAR, msg[i]);
     }
-    CheckBufferAndProcess();
 #else
     setbits(CONTROL_PORT, CONTROL_RS);
 #ifdef USING_RW
@@ -269,9 +246,6 @@ namespace LCD {
       // Entry mode: 0000 01IS (Increment,Shift)
       commandWrite(ENTRY | INCREMENT);
     }
-#ifdef ASYNC_WORK
-    mProcessingBuffer = false;
-#endif
   }
 
 
@@ -284,9 +258,8 @@ namespace LCD {
       x += 0x40;
     }
     uint8_t cmd = SETDDRAM | x;
-#ifdef ASYNC_WORK
+#ifdef LCD_BUFFERED_INPUT
     mBuffer.push_back().set(BufferData::COMMAND, cmd);
-    CheckBufferAndProcess();
 #else
     commandWrite(cmd);
 #endif
@@ -307,9 +280,8 @@ namespace LCD {
       (display ? DISPLAY_ON : DISPLAY_OFF) |
       (cursor ? CURSOR_ON : CURSOR_OFF) |
       (blink ? BLINK_ON : BLINK_OFF);
-#ifdef ASYNC_WORK
+#ifdef LCD_BUFFERED_INPUT
     mBuffer.push_back().set(BufferData::COMMAND, cmd);
-    CheckBufferAndProcess();
 #else
     commandWrite(cmd);
 #endif

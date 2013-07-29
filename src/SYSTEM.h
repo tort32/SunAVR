@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#include "LCD.h"
 
 namespace SYSTEM
 {
@@ -19,11 +20,15 @@ namespace SYSTEM
       {
         extern void ReadClock();
         ReadClock();
-      }
+      } else
       if(cnt3 == 1)
       {
         extern void UpdateClock();
         UpdateClock();
+      }
+      else
+      {
+        LCD::updateBuffer();
       }
     }
   }

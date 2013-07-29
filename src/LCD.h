@@ -1,6 +1,8 @@
 #pragma once
 #include "stdafx.h"
 
+#define LCD_BUFFERED_INPUT 1
+
 // HD04408 LCD module with 4 bit data bus
 namespace LCD
 {
@@ -78,4 +80,9 @@ namespace LCD
 
   void buildChar(uint8_t location, const uint8_t charmap[8]);
   void buildChars(const uint8_t charmap[64]);
+
+#ifdef LCD_BUFFERED_INPUT
+  // Check input buffer and process output one command from FIFO
+  void updateBuffer();
+#endif
 };

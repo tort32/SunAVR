@@ -166,7 +166,7 @@ namespace SYSTEM
   void ReadClock()
   {
     setbits(PORTD, _BV(PD6));
-    RTC::read();
+    RTC::read(); // 220us at 8MHz
     clrbits(PORTD, _BV(PD6));
   }
 
@@ -182,7 +182,6 @@ namespace SYSTEM
     LCD::print(':');
     LCD::printDigit(RTC::get(RTC::SEC_HI));
     LCD::printDigit(RTC::get(RTC::SEC_LO));
-    //LCD::printIn("012345678");
     clrbits(PORTD, _BV(PD7));
   }
 
