@@ -56,17 +56,17 @@ namespace LED
     }
 
     // Interpolate between two colors.
-    // semilevels = 0..15 (0 = source color, 16 = destination color)
-    Color interpolateLinear(const Color& col, uint8_t semilevels) const
+    // finelevels = 0..256 (0 = source color, 256 = destination color)
+    Color interpolateLinear(const Color& col, uint8_t finelevels) const
     {
       int16_t deltaR = (int16_t)col.R - (int16_t)R;
       int16_t deltaG = (int16_t)col.G - (int16_t)G;
       int16_t deltaB = (int16_t)col.B - (int16_t)B;
 
       Color res;
-      res.R = (int16_t)R + ((deltaR * semilevels) >> 4);
-      res.G = (int16_t)G + ((deltaG * semilevels) >> 4);
-      res.B = (int16_t)B + ((deltaB * semilevels) >> 4);
+      res.R = (int16_t)R + (int16_t)(((int32_t)deltaR * (int32_t)finelevels) / 256);
+      res.G = (int16_t)G + (int16_t)(((int32_t)deltaG * (int32_t)finelevels) / 256);
+      res.B = (int16_t)B + (int16_t)(((int32_t)deltaB * (int32_t)finelevels) / 256);
       return res;
     }
   };

@@ -77,7 +77,7 @@ namespace SYSTEM
 
   void init()
   {
-     mRunCmd = STATE_ANIM_FADE; //CMD_OFF;
+     mRunCmd = CMD_SMOOTH; //CMD_OFF;
      mInputState = STATE_INPUT_CMD;
      mAnimState = STATE_ANIM_NONE;
      mAnimSpeed = 0;
@@ -106,8 +106,8 @@ namespace SYSTEM
   void updateAnimStrobe()
   {
     // Fast burst the light
-    uint16_t cnt = mAnimCnt % 512;
-    if(cnt<20)
+    uint16_t cnt = mAnimCnt % 256;
+    if(cnt<10)
       LED::setColor(mColor);
     else
       LED::setColor(LED::Color(0,0,0));
@@ -138,8 +138,8 @@ namespace SYSTEM
     const uint16_t seqLength = ANIM_COUNTER_MAX / 8;
     uint16_t seqPart = mAnimCnt / seqLength; // 0..7
     uint16_t seqFract = mAnimCnt % seqLength; // 0..(seqLength-1)
-    uint8_t semilevel = seqFract / (seqLength / 16); // 0..15
-    LED::setColor(gColorTable[colorSeq[seqPart]].interpolateLinear(gColorTable[colorSeq[seqPart+1]], semilevel));
+    uint8_t finelevels = seqFract / (seqLength / 256); // 0..256
+    LED::setColor(gColorTable[colorSeq[seqPart]].interpolateLinear(gColorTable[colorSeq[seqPart+1]], finelevels));
   }
 
   uint16_t UpdateAnim()
